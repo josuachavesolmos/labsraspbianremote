@@ -1,0 +1,1 @@
+sudo cp Adafruit_ADS1x15.py /usr/lib/python3/dist-packages/

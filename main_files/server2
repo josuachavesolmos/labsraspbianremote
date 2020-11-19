@@ -1,0 +1,123 @@
+#!/usr/bin/python3
+import http.server
+BaseHTTPServer = CGIHTTPServer = SimpleHTTPServer = http.server
+import cgi
+from python_src.main_read_write import *
+import random
+import os
+
+archivo = open("Resultado2.csv","a")
+archivo.write("Voltaje,Temperatura\n")
+archivo.close()
+
+def hostname_ip():
+    ip=os.popen("hostname -I").read()
+    ip=ip.split()[0]
+    return ip
+vset=0
+class projectServer(http.server.SimpleHTTPRequestHandler):
+
+    def do_GET(self):
+        global vset,ip
+        try:
+            path=self.path
+
+            if self.path.endswith('/lecturaADC'):
+                self.send_response(200)
+                self.send_header('content-type','text/html')
+                self.end_headers()
+                v=readADC()
+                output=''
+                output+='<html>'
+                output+='<head>'
+                output+='<link href="css/rxddKy2.css" rel="stylesheet">'
+                output+='<meta http-equiv="refresh" content="1">' #OJO content es ek tiempo de recarga actualmente 1s
+                output+='</head><body>'
+                output+='<h2>Resultados:</h2>'
+                output+='<div style="padding: 3px;box-shadow: 10px 10px 10px 10px rgba(0, 0, 0, 0.2), 5px 5px 5px 5px rgba(0, 0, 0, 0.24);background: #FFFFFF;text-align: center;">'
+                output+='<p class="margin-b-5">Voltaje = '+str(round(v[0],4))+' V </p>'
+                output+='<p class="margin-b-5">Temperatura = '+str(round(v[3]*105.88235-1.17647,4))+' °C </p>'
+                #105.88235-1.17647 para sensor de temperatura y 16.66666-47.5 ventilador
+                output+='</div>'
+                output+='</body></html>'
+                self.wfile.write(output.encode())
+                print('V1=',v[0],'V3=',v[3])
+                #archivo resultados lab
+                archivo = open("Resultado2.csv","a")
+                c=round(v[0],4)
+                d=round(v[3]*105.88235-1.17647,4)
+                archivo.write(str(c)+','+str(d)+'\n')
+                archivo.close()
+                #fin archivo resultados
+            elif self.path.endswith('/video'):
+                self.send_response(200)
+                self.send_header('content-type','text/html')
+                self.end_headers()
+                output=''
+                output+='<html><head><meta name="viewport" content="width=device-width, minimum-scale=0.1"></head><body style="margin: 0px; background: #0e0e0e;">'
+                output+='<img style="-webkit-user-select: none;margin: auto;" '
+                output+='src="http://'+ip+':8081/"></body></html>'
+                self.wfile.write(output.encode())
+            elif len(path.split('?'))==2 and path.split('?')[0]=='/set_v.html':
+                vset=path.split('?')[1].split('=')[1]
+                print(vset)
+                if vset!='':
+                    try:
+                        vset=float(vset)
+                        if vset>=0 and vset <= 5:
+                            vset=(vset)
+                            set_V(vset)
+                            print('Set DAC',vset,'V')
+                        else:
+                            print('Valor invalido',vset,'V')
+                    except:
+                        print('Valor invalido',path.split('?')[1].split('=')[1])
+                super().do_GET()
+            elif self.path.endswith('/trackV'):
+                self.send_response(200)
+                #self.send_header('content-type','text/html')
+                self.end_headers()
+                print(str(vset).encode(),vset)
+                self.wfile.write(str(vset).encode())
+            elif self.path.endswith('/ip'):
+                self.send_response(200)
+                #self.send_header('content-type','text/html')
+                self.end_headers()
+                self.wfile.write(ip.encode())
+            else:
+                super().do_GET()
+        except:
+            pass
+    def do_POST(self):
+        global vset
+        if self.path.endswith('/set_v.html') or self.path.endswith('/set_v_2.html') or self.path.endswith('/set_v_21.html'):
+            ctype, p_dict = cgi.parse_header(self.headers['content-type'])
+            p_dict['boundary'] = bytes(p_dict['boundary'], "utf-8")
+            content_len = int(self.headers.get('Content-length'))
+            p_dict['CONTENT-LENGTH'] = content_len
+            vset=cgi.parse_multipart(self.rfile, p_dict).get('v')[0]
+            print(vset)
+            if vset!='':
+                try:
+                    vset=float(vset)
+                    if vset>=0 and vset <= 5:
+                        vset=(vset)
+                        set_V(vset)
+                        print('Set DAC',vset,'V')
+                    else:
+                        print('Valor invalido',vset,'V')
+                except:
+                    print('Valor invalido',vset)
+            self.send_response(301)
+            self.send_header('content-type','text/html')
+            self.send_header('Location',self.path.split('/')[-1])
+            self.end_headers()      
+
+def test(HandlerClass = projectServer,
+         ServerClass = BaseHTTPServer.HTTPServer):
+    BaseHTTPServer.test(HandlerClass, ServerClass)
+
+
+if __name__ == '__main__':
+    ip=hostname_ip()
+    test()

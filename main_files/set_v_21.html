@@ -1,0 +1,41 @@
+ 
+<!DOCTYPE html>
+
+<html lang="en" class="no-js">
+   
+    <head>
+
+      <link href="css/rxddKy2.css" rel="stylesheet">
+      <!-- 
+      <script src="js/rxddKy.js" type="text/javascript"></script>
+      /-->
+    </head>
+    <body>
+
+<div class="container">
+  <h2>Funcion Escalon:</h2>
+  <div style="padding: 10px;box-shadow: 10px 10px 10px 10px rgba(0, 0, 0, 0.2), 5px 5px 5px 5px rgba(0, 0, 0, 0.24);background: #FFFFFF;text-align: center;">
+    <form action="set_v.html" method="get">
+      <input id=user name=v type="text" placeholder="Establecer Escalon"/>
+      <!-- <button id=boton href='javascript:;' onclick="Login();">login</button> -->
+     <input type="submit" value="0 -> Pulso"> 
+    </form>
+  </div>
+</div>
+<script language="JavaScript"> 
+  var boton = document.getElementById("boton");
+  var usuario=document.getElementById('user'); 
+  var password=document.getElementById('psswd'); 
+// cuando se pulsa en el enlace
+function Loginf() {
+    if (btoa(usuario.value)=="VXN1YXJpbw==" && btoa(password.value)=="cHNzd2Q=") { 
+      window.location="menu.html"; 
+    }else{
+      alert('Digite la contraseña correcta :)');
+      window.location="login.html"; 
+    }
+  } 
+</script> 
+
+ </body>
+ </html>
